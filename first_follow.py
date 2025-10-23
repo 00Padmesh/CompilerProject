@@ -1,21 +1,21 @@
-from grammar_utils import read_grammar
+# first_follow.py
 
 def compute_first(grammar):
     first = {nt: set() for nt in grammar}
-    
+
     def first_of(symbol):
         if symbol not in grammar:
-            return {symbol} if symbol != 'ε' else {'ε'}
+            return {symbol} if symbol != 'eps' else {'eps'}
 
         result = set()
         for production in grammar[symbol]:
             for sym in production:
                 res = first_of(sym)
-                result |= (res - {'ε'})
-                if 'ε' not in res:
+                result |= (res - {'eps'})
+                if 'eps' not in res:
                     break
             else:
-                result.add('ε')
+                result.add('eps')
         return result
 
     changed = True
@@ -25,11 +25,11 @@ def compute_first(grammar):
             before = len(first[nt])
             for production in grammar[nt]:
                 for sym in production:
-                    first[nt] |= (first_of(sym) - {'ε'})
-                    if 'ε' not in first_of(sym):
+                    first[nt] |= (first_of(sym) - {'eps'})
+                    if 'eps' not in first_of(sym):
                         break
                 else:
-                    first[nt].add('ε')
+                    first[nt].add('eps')
             after = len(first[nt])
             if after > before:
                 changed = True
@@ -39,7 +39,7 @@ def compute_first(grammar):
 def compute_follow(grammar, first, start_symbol):
     follow = {nt: set() for nt in grammar}
     follow[start_symbol].add('$')  # End of input marker
-    
+
     changed = True
     while changed:
         changed = False
@@ -51,20 +51,19 @@ def compute_follow(grammar, first, start_symbol):
                         if beta:
                             first_beta = set()
                             for sym in beta:
-                                # handle terminals properly
                                 if sym in grammar:
                                     first_beta |= first[sym]
-                                    if 'ε' not in first[sym]:
+                                    if 'eps' not in first[sym]:
                                         break
-                                else:  # terminal
+                                else:
                                     first_beta.add(sym)
                                     break
                             else:
-                                first_beta.add('ε')
-                            
+                                first_beta.add('eps')
+
                             before = len(follow[B])
-                            follow[B] |= (first_beta - {'ε'})
-                            if 'ε' in first_beta:
+                            follow[B] |= (first_beta - {'eps'})
+                            if 'eps' in first_beta:
                                 follow[B] |= follow[A]
                             if len(follow[B]) > before:
                                 changed = True
@@ -76,14 +75,20 @@ def compute_follow(grammar, first, start_symbol):
     return follow
 
 
+# Example usage
+if __name__ == "__main__":
+    from grammar_utils import read_grammar, find_symbols
 
+    grammar = read_grammar("tests/sample_grammar.txt")
+    start_symbol = list(grammar.keys())[0]
 
-g = read_grammar("tests/sample_grammars.txt")
-first = compute_first(g)
-print("First sets: ")
-print(first)
+    first = compute_first(grammar)
+    follow = compute_follow(grammar, first, start_symbol)
 
-start_symbol = list(g.keys())[0]  # pick the first non-terminal as start
-follow = compute_follow(g, first, start_symbol=start_symbol)
-print("\nFollow sets: ")
-print(follow)
+    print("FIRST sets:")
+    for nt, s in first.items():
+        print(f"FIRST({nt}) = {s}")
+
+    print("\nFOLLOW sets:")
+    for nt, s in follow.items():
+        print(f"FOLLOW({nt}) = {s}")
