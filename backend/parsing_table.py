@@ -12,26 +12,26 @@ def compute_parsing_table(grammar, first, follow):
 
     for A in grammar:
         for production in grammar[A]:
-            # Compute FIRST(alpha) for the production
+            # Compute FIRST(alpha) for each production
             first_alpha = set()
             for sym in production:
-                if sym in grammar:  # non-terminal
+                if sym in grammar:
                     first_alpha |= (first[sym] - {'eps'})
                     if 'eps' not in first[sym]:
                         break
-                else:  # terminal
+                else:
                     first_alpha.add(sym)
                     break
             else:
                 first_alpha.add('eps')
 
-            # Fill table for terminals in FIRST(alpha)
+            # Fill parsing table
             for terminal in first_alpha - {'eps'}:
                 if terminal in table[A]:
                     conflicts.append((A, terminal, table[A][terminal], production, "FIRST/FIRST"))
                 table[A][terminal] = production
 
-            # If epsilon is in FIRST(alpha), add entries for FOLLOW(A)
+            # Add FOLLOW(A) if epsilon in FIRST(alpha)
             if 'eps' in first_alpha:
                 for terminal in follow[A]:
                     if terminal in table[A]:
