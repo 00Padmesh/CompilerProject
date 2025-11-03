@@ -108,7 +108,7 @@ function renderConflicts(conflicts) {
 
   return (
     <div className="conflicts-container conflicts-invalid">
-      <strong>GramMAR IS NOT LL(1)</strong>
+      <strong>Grammar is NOT LL(1).</strong>
       <p>The following conflicts were detected:</p>
       <ul className="conflicts-list">
         {conflicts.map((conflict, index) => {

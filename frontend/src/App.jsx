@@ -67,6 +67,7 @@ function App() {
         <div className="app-container">
             <header className="app-header">
                 <h1>LL(1) Parser Visualizer</h1>
+                <p className="app-subtitle">Analyze grammars, inspect FIRST/FOLLOW, and visualize parse trees.</p>
             </header>
 
             <main className="app-main">

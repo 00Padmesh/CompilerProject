@@ -36,10 +36,32 @@ body {
   font-weight: 600;
 }
 
+.app-subtitle {
+  margin-top: 0.25rem;
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
 .app-main {
   display: flex;
   flex-grow: 1;
   overflow: hidden; /* Prevents scrollbars from overlapping */
+}
+
+/* Responsive layout: stack panels on small screens */
+@media (max-width: 900px) {
+  .app-main {
+    flex-direction: column;
+  }
+  .input-panel,
+  .output-panel {
+    width: 100%;
+    border-right: none;
+    border-bottom: 2px solid var(--border-color);
+  }
+  .output-panel {
+    border-bottom: none;
+  }
 }
 
 /* --- Left Column --- */
