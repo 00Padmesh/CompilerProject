@@ -24,26 +24,62 @@ function App() {
     // UI State
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null); // To display API errors
+    const [recursionError, setRecursionError] = useState(null);
 
     // === 2. Handlers (Functions to call the API) ===
 
-    const handleAnalyze = async () => {
-        setIsLoading(true);
-        setError(null);
-        setAnalysis(null);      // Clear old results
-        setParseResult(null); // Clear old results
-        try {
-            const response = await analyzeGrammar(grammarText);
+    // frontend/src/App.jsx
+
+const handleAnalyze = async () => {
+    setIsLoading(true);
+    setError(null);
+    setAnalysis(null);
+    setParseResult(null);
+    setRecursionError(null); // <-- Clear previous error
+    try {
+        const response = await analyzeGrammar(grammarText);
+
+        // --- THIS IS THE NEW LOGIC ---
+        if (response.data.error_type === 'LEFT_RECURSION') {
+            setRecursionError(response.data); // Save the fix data
+            setError(response.data.analysis_error); // Show the error message
+        } 
+        // --- END NEW LOGIC ---
+        else {
+            // Happy path (no recursion)
             setAnalysis(response.data);
             if (response.data.conflicts && response.data.conflicts.length > 0) {
-                // It's not an "error", but a "warning"
                 setError("Grammar is not LL(1). Conflicts detected.");
             }
-        } catch (err) {
-            setError(err.response?.data?.detail || 'Failed to analyze grammar.');
         }
-        setIsLoading(false);
-    };
+    } catch (err) {
+        setError(err.response?.data?.detail || 'Failed to analyze grammar.');
+    }
+    setIsLoading(false);
+};
+
+// frontend/src/App.jsx
+
+// ... (after handleAnalyze)
+
+const handleApplyFix = () => {
+    if (!recursionError) return;
+
+    // 1. Get the fixed grammar text from state
+    const fixedGrammar = recursionError.repaired_grammar_text;
+
+    // 2. Put that text into the main text area
+    setGrammarText(fixedGrammar);
+
+    // 3. Clear the error state
+    setRecursionError(null);
+    setError(null);
+
+    // 4. We can now just let the user re-click "Analyze", 
+    //    or we could trigger it automatically. Let's just update the text.
+    //    The user will see the text change and can click "Analyze" again.
+    //    This is a simple and clear UX.
+};
 
     const handleParse = async () => {
         if (!analysis || !analysis.valid) {
@@ -83,7 +119,27 @@ function App() {
                     <button onClick={handleAnalyze} disabled={isLoading || !grammarText}>
                         {isLoading ? 'Analyzing...' : 'Analyze Grammar'}
                     </button>
-                    
+                    {/* --- NEW UI BLOCK --- */}
+{recursionError && (
+    <div className="recursion-fix-box">
+        <h4>Left Recursion Detected!</h4>
+        <p>
+            Your grammar has left recursion in: 
+            <strong> {recursionError.recursive_non_terminals.join(', ')}</strong>.
+        </p>
+        <p>
+            To make it LL(1) compatible, it must be rewritten. We can use
+            this automatically generated equivalent:
+        </p>
+        <pre className="fixed-grammar-preview">
+            {recursionError.repaired_grammar_text}
+        </pre>
+        <button onClick={handleApplyFix} className="fix-button">
+            Use This Grammar
+        </button>
+    </div>
+)}
+{/* --- END NEW UI BLOCK --- */}
                     {/* --- Parse Runner Section --- */}
 {analysis && analysis.valid && (
     <div className="parse-runner">

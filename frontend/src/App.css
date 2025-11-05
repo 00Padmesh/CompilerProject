@@ -444,3 +444,33 @@ button:disabled {
   padding: 0.5rem 1rem;
   font-size: 0.9rem;
 }
+/* frontend/src/App.css */
+
+/* --- Recursion Fix Box Styles --- */
+.recursion-fix-box {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 2px solid var(--warning-color);
+  background-color: #fffaf0;
+  border-radius: 4px;
+}
+.recursion-fix-box h4 {
+  margin-top: 0;
+  color: #d97706; /* A warning-like color */
+}
+.fixed-grammar-preview {
+  background-color: #fff;
+  border: 1px solid var(--border-color);
+  padding: 0.5rem;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Menlo', monospace;
+  white-space: pre-wrap;
+}
+.fix-button {
+  background-color: var(--warning-color);
+  width: 100%;
+  margin-top: 0.5rem;
+}
+.fix-button:hover {
+  background-color: #f59e0b;
+}
