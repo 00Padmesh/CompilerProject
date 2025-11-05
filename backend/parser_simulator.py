@@ -4,73 +4,92 @@ from first_follow import compute_first, compute_follow
 from parsing_table import compute_parsing_table
 
 
+# backend/parser_simulator.py
+
 def parse_input_string(grammar, parsing_table, start_symbol, input_string):
     input_tokens = input_string.split() + ['$']
     stack = ['$', start_symbol]
     pointer = 0
-    trace = []
+    
+    # === CHANGE 1: Rename `trace` to `trace_steps` ===
+    trace_steps = [] 
+    
     parse_tree = {"name": start_symbol, "children": []}
     tree_stack = [parse_tree]
 
     while stack:
+        # --- Capture state at the *beginning* of the loop ---
+        # We use list() to make a snapshot copy of the stack
+        current_stack = list(stack) 
+        current_input = input_tokens[pointer:]
+
         top = stack.pop()
         current_token = input_tokens[pointer] if pointer < len(input_tokens) else None
 
+        # --- This is the data we will append ---
+        step_data = {
+            "stack": current_stack[::-1], # Reversed for user-friendly view
+            "input": current_input,
+            "action": "" # We'll fill this in
+        }
+
         # Match terminal
         if top == current_token:
-            trace.append(
-                f"Stack: {stack[::-1]} | Input: {' '.join(input_tokens[pointer:])} | "
-                f"Action: Match '{current_token}'"
-            )
+            step_data["action"] = f"Match '{current_token}'"
+            trace_steps.append(step_data)
+            
             pointer += 1
             if tree_stack:
                 tree_stack.pop()
 
         # Epsilon production
         elif top == 'eps':
-            trace.append(
-                f"Stack: {stack[::-1]} | Input: {' '.join(input_tokens[pointer:])} | "
-                f"Action: Expand {top} → ε"
-            )
+            step_data["action"] = f"Expand {top} → ε"
+            trace_steps.append(step_data)
+
             if tree_stack:
                 tree_stack.pop()
 
-        # Error: No rule for this combination
+        # Error: No rule
         elif top not in parsing_table or current_token not in parsing_table[top]:
-            trace.append(
-                f"Stack: {stack[::-1]} | Input: {' '.join(input_tokens[pointer:])} | "
-                f"Action: ERROR (no rule for {top}, {current_token})"
-            )
-            return trace, parse_tree, "Rejected"
+            step_data["action"] = f"ERROR: No rule for M[{top}, {current_token}]"
+            trace_steps.append(step_data)
+            return trace_steps, parse_tree, "Rejected"
 
         # Expand using parsing table
         else:
             production = parsing_table[top][current_token]
             rhs = production if production != ['eps'] else []
-            trace.append(
-                f"Stack: {stack[::-1]} | Input: {' '.join(input_tokens[pointer:])} | "
-                f"Action: Expand {top} → {' '.join(production)}"
-            )
+            
+            step_data["action"] = f"Expand {top} → {' '.join(production)}"
+            trace_steps.append(step_data)
 
             current_node = tree_stack.pop() if tree_stack else None
 
             if current_node:
                 current_node["children"] = [{"name": sym, "children": []} for sym in production]
-
-                # Push children (in reverse order for correct left-to-right traversal)
                 for child in reversed(current_node["children"]):
                     if child["name"] != 'eps':
                         stack.append(child["name"])
                         tree_stack.append(child)
             else:
-                # If we somehow lost sync, continue safely
                 for sym in reversed(rhs):
                     if sym != 'eps':
                         stack.append(sym)
 
-    # Final acceptance check
-    status = "Accepted" if pointer == len(input_tokens) else "Rejected"
-    return trace, parse_tree, status
+    # === CHANGE 2: Add the final "Accepted" state ===
+    trace_steps.append({
+        "stack": ["$"],
+        "input": ["$"],
+        "action": "Accepted"
+    })
+    
+    status = "Accepted"
+    
+    # === CHANGE 3: Return `trace_steps` ===
+    return trace_steps, parse_tree, status
+
+# ... rest of the file ...
 
 
 if __name__ == "__main__":

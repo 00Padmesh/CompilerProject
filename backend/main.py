@@ -79,11 +79,14 @@ def parse_string(data: ParseInput):
         parsing_table, conflicts = compute_parsing_table(grammar, first, follow)
 
         if conflicts:
-            raise HTTPException(status_code=400, detail="Grammar is not LL(1). Please fix conflicts before parsing.")
+            raise HTTPException(...)
 
-        trace, tree, status = parse_input_string(grammar, parsing_table, start_symbol, data.input_string)
+        # === CHANGE 4: Update variable names ===
+        trace_steps, tree, status = parse_input_string(grammar, parsing_table, start_symbol, data.input_string)
+        
+        # === CHANGE 5: Update the return object key ===
         return {
-            "trace": trace,
+            "trace_steps": trace_steps, # Renamed from "trace"
             "parse_tree": tree,
             "result": status
         }
